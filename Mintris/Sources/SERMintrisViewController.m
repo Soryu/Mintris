@@ -359,7 +359,7 @@ static const float      kStartFrequency = 1.666; // heartbeats per second
     if (lineCleared)
     {
       self.noOfLinesCleared++;
-      self.statusLabel.text = [NSString stringWithFormat:@"%d %@ cleared!", self.noOfLinesCleared, self.noOfLinesCleared == 1 ? @"line" : @"lines"];
+      self.statusLabel.text = [NSString stringWithFormat:@"%ld %@ cleared!", (long)self.noOfLinesCleared, self.noOfLinesCleared == 1 ? @"line" : @"lines"];
       for (NSInteger y = lineIndex; y >= 0; --y)
       {
         if (y - 1 < 0)
