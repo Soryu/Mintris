@@ -26,7 +26,7 @@ static const float      kStartFrequency = 1.666; // heartbeats per second
 @property (nonatomic, strong) NSSet *tileLayers;
 @property (nonatomic, strong) NSSet *currentTileLayers;
 
-@property (nonatomic) NSInteger noOfLinesCleared;
+@property (nonatomic) NSInteger noOfRowsCleared;
 
 @end
 
@@ -186,7 +186,7 @@ static const float      kStartFrequency = 1.666; // heartbeats per second
   [self.currentTileLayers makeObjectsPerformSelector:@selector(removeFromSuperlayer)];
   self.currentTileLayers = nil;
   
-  self.noOfLinesCleared = 0;
+  self.noOfRowsCleared = 0;
 }
 
 - (void)heartbeat:(NSTimer *)timer
@@ -251,17 +251,18 @@ static const float      kStartFrequency = 1.666; // heartbeats per second
   }
   else
   {
-    NSMutableSet *ys = [NSMutableSet new];
+    NSInteger largestRowIndex = -1;
     for (NSArray *part in tile.parts)
     {
       NSInteger partX = [[part firstObject] integerValue] + tile.positionX;
       NSInteger partY = [[part lastObject] integerValue] + tile.positionY;
     
       _matrix[partY][partX] = tile.color;
-      [ys addObject:@(partY)];
+      largestRowIndex = MAX(largestRowIndex, partY);
     }
     
-    [self checkAndClearLines:ys];
+    NSInteger numberOfRowsClearedinThisTurn = [self checkAndClearRowsFromIndex:largestRowIndex];
+    [self checkLevelUp:numberOfRowsClearedinThisTurn];
     [self createNewTile];
   }
 }
@@ -340,44 +341,61 @@ static const float      kStartFrequency = 1.666; // heartbeats per second
   return isValid;
 }
 
-- (void)checkAndClearLines:(NSSet *)ys
+- (NSInteger)checkAndClearRowsFromIndex:(NSInteger)largestRowIndex
 {
-  // sort reverse = from bottom and check for full lines
-  NSSortDescriptor *descriptor = [NSSortDescriptor sortDescriptorWithKey:@"self" ascending:NO];
-  NSArray *ysOrdered = [ys sortedArrayUsingDescriptors:@[descriptor]];
+  NSInteger rowIndex = largestRowIndex;
+  NSInteger numberOfRowsClearedinThisTurn = 0;
   
-  for(NSNumber *yNumber in ysOrdered)
+  while (rowIndex >= 0)
   {
-    NSInteger lineIndex = [yNumber integerValue];
-    
-    BOOL lineCleared = YES;
-    for (NSInteger x = 0; x < kBoardWidth && lineCleared; ++x)
+    // find out if this row is full
+    BOOL rowFull = YES;
+    for (NSInteger x = 0; x < kBoardWidth && rowFull; ++x)
     {
-      lineCleared &= (_matrix[lineIndex][x] != SERMintrisEmpty);
+      rowFull &= (_matrix[rowIndex][x] != SERMintrisEmpty);
+    }
+  
+    if (!rowFull)
+    {
+      // skip to next row
+      --rowIndex;
+      continue;
     }
     
-    if (lineCleared)
+    ++numberOfRowsClearedinThisTurn;
+    
+    for (NSInteger y = rowIndex; y >= 0; --y)
     {
-      self.noOfLinesCleared++;
-      self.statusLabel.text = [NSString stringWithFormat:@"%ld %@ cleared!", (long)self.noOfLinesCleared, self.noOfLinesCleared == 1 ? @"line" : @"lines"];
-      for (NSInteger y = lineIndex; y >= 0; --y)
+      if (y == 0)
       {
-        if (y - 1 < 0)
-        {
-          for (NSInteger x = 0; x < kBoardWidth; ++x)
-            _matrix[y][x] = SERMintrisEmpty;
-        }
-        else
-        {
-          for (NSInteger x = 0; x < kBoardWidth; ++x)
-            _matrix[y][x] = _matrix[y - 1][x];
-        }
+        // top row, let's just empty it
+        for (NSInteger x = 0; x < kBoardWidth; ++x)
+          _matrix[y][x] = SERMintrisEmpty;
       }
-      
-      if (self.noOfLinesCleared % 5 == 0)
+      else
       {
-        [self levelUp];
+        // copy contents from row above
+        for (NSInteger x = 0; x < kBoardWidth; ++x)
+          _matrix[y][x] = _matrix[y - 1][x];
       }
+    }
+  }
+  
+  return numberOfRowsClearedinThisTurn;
+}
+
+- (void)checkLevelUp:(NSInteger)numberOfRowsClearedinThisTurn
+{
+  if (numberOfRowsClearedinThisTurn > 0)
+  {
+    NSInteger previousNoOfRowsCleared = self.noOfRowsCleared;
+
+    self.noOfRowsCleared += numberOfRowsClearedinThisTurn;
+
+    self.statusLabel.text = [NSString stringWithFormat:@"%ld %@ cleared!", (long)self.noOfRowsCleared, self.noOfRowsCleared == 1 ? @"row" : @"rows"];
+    if (self.noOfRowsCleared / 5 > previousNoOfRowsCleared / 5)
+    {
+      [self levelUp];
     }
   }
 }
