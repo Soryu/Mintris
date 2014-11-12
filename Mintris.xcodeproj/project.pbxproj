@@ -478,6 +478,7 @@
 				E2FAC6FD17E65FD800C02710 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		E2FAC6FE17E65FD800C02710 /* Build configuration list for PBXNativeTarget "MintrisTests" */ = {
 			isa = XCConfigurationList;
@@ -486,6 +487,7 @@
 				E2FAC70017E65FD800C02710 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
