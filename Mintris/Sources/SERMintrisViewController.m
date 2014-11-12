@@ -135,6 +135,8 @@ static const float      kStartFrequency = 1.666; // heartbeats per second
 {
   if (isRunning)
   {
+    [self.timer invalidate]; // just to be safe, self.timer should always be nil here
+
     self.frequency = kStartFrequency;
     float interval = 1.0 / self.frequency;
     self.timer = [NSTimer scheduledTimerWithTimeInterval:interval target:self selector:@selector(heartbeat:) userInfo:nil repeats:YES];
@@ -244,6 +246,12 @@ static const float      kStartFrequency = 1.666; // heartbeats per second
   
   BOOL isValid = [self isValidPositionForTile:tile x:x y:y];
   
+  if (!isValid && ![self isTileFullyVisible:tile])
+  {
+    // cannot advance tile that is not fully on screen yet -> GAME OVER
+    [self gameOver];
+  }
+  
   if (isValid)
   {
     tile.positionY = y;
@@ -346,6 +354,26 @@ static const float      kStartFrequency = 1.666; // heartbeats per second
   return isValid;
 }
 
+- (BOOL)isTileFullyVisible:(SERMintrisTile *)tile
+{
+  BOOL isTileFullyVisible = YES;
+
+  NSInteger y = self.currentTile.positionY;
+  
+  for (NSArray *part in [tile parts])
+  {
+    NSInteger partY = [[part lastObject] integerValue] + y;
+
+    if (partY < 0)
+    {
+      isTileFullyVisible = NO;
+      break;
+    }
+  }
+  
+  return isTileFullyVisible;
+}
+
 - (NSInteger)checkAndClearRowsFromIndex:(NSInteger)largestRowIndex
 {
   NSInteger rowIndex = largestRowIndex;
@@ -403,6 +431,25 @@ static const float      kStartFrequency = 1.666; // heartbeats per second
       [self levelUp];
     }
   }
+}
+
+- (void)gameOver
+{
+  self.isRunning = NO;
+  
+  NSString *message = @"?";
+  
+  if (self.noOfRowsCleared < 5)
+  {
+    message = @"You do know how this works, right?";
+  }
+  else
+  {
+    message = [NSString stringWithFormat:@"Good job, you cleared %ld rows!", (long)self.noOfRowsCleared];
+  }
+  
+  UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"GAME OVER" message:message delegate:nil cancelButtonTitle:@"Dismiss" otherButtonTitles: nil];
+  [alert show];
 }
 
 @end
