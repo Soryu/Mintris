@@ -260,6 +260,22 @@
   return set;
 }
 
-
+- (NSString *)description
+{
+  NSString *name = @"?";
+  switch (self.type)
+  {
+    case SERMintrisTileType1: name = @"Square"; break;
+    case SERMintrisTileType2: name = @"I"; break;
+    case SERMintrisTileType3: name = @"T"; break;
+    case SERMintrisTileType4: name = @"L"; break;
+    case SERMintrisTileType5: name = @"L reverse"; break;
+    case SERMintrisTileType6: name = @"Z"; break;
+    case SERMintrisTileType7: name = @"Z reverse"; break;
+    default: break;
+  }
+  
+  return name;
+}
 
 @end
