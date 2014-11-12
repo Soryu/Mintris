@@ -331,6 +331,11 @@ static const float      kStartFrequency = 1.666; // heartbeats per second
       break;
     }
     
+    if (partY < 0)
+    {
+      continue;
+    }
+    
     if (_matrix[partY][partX] != SERMintrisEmpty)
     {
       isValid = NO;
